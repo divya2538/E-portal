@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shoply — Single File E-Portal</title>
+  <style>
+    /* --------- Theme & reset ---------- */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      -webkit-font-smoothing:antialiased;background:#f6f8fb;color:#0f172a;
+    }
+    .container{max-width:1100px;margin:0 auto;padding:18px}
+    a{color:inherit;text-decoration:none}
+    button{cursor:pointer}
+
+    /* --------- Header -------- */
+    .site-header{position:sticky;top:0;background:#fff;z-index:50;box-shadow:0 6px 20px rgba(12,20,40,0.06)}
+    .header-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px}
+    .brand{font-weight:800;color:#0b6cff;font-size:1.35rem}
+    .nav{display:flex;gap:12px;align-items:center}
+    .nav a,.nav button{padding:8px 12px;border-radius:8px;font-weight:700;border:none;background:transparent;color:#334155}
+    .nav a:hover,.nav button:hover{background:rgba(11,108,255,0.06)}
+
+    /* --------- Hero -------- */
+    .hero{display:flex;gap:20px;align-items:center;background:linear-gradient(90deg,#fff 65%, rgba(11,108,255,0.03));padding:22px;border-radius:12px;margin:18px 0}
+    .hero-left{flex:1}
+    .hero-right{flex:1;text-align:right}
+    .hero h1{margin:0;font-size:1.9rem}
+    .hero p{color:#6b7280;margin-top:6px}
+
+    /* --------- Grid & cards -------- */
+    .products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;margin-top:18px}
+    .card{background:#fff;padding:12px;border-radius:12px;box-shadow:0 12px 30px rgba(12,20,40,0.04);display:flex;flex-direction:column;gap:10px}
+    .card img{width:100%;height:180px;object-fit:cover;border-radius:8px}
+    .card h3{margin:0;font-size:1rem}
+    .price-row{display:flex;justify-content:space-between;align-items:center}
+    .price{font-weight:800}
+    .mrp{color:#6b7280;text-decoration:line-through;font-size:0.9rem}
+
+    .badge{background:#fffbeb;color:#92400e;padding:6px 8px;border-radius:999px;font-weight:800;font-size:0.8rem}
+
+    /* -------- Buttons -------- */
+    .btn{display:inline-block;padding:8px 12px;border-radius:10px;border:none;font-weight:800}
+    .btn-primary{background:#0b6cff;color:#fff}
+    .btn-ghost{background:transparent;border:1px solid #e6eefc;padding:7px 10px}
+
+    /* -------- Product detail -------- */
+    .product-page{margin:18px 0}
+    .product-detail{display:flex;gap:20px;flex-wrap:wrap}
+    .product-detail img{width:100%;border-radius:12px;max-height:520px;object-fit:cover}
+
+    /* -------- Cart & wishlist list items -------- */
+    .line{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:#fff;box-shadow:0 8px 22px rgba(12,20,40,0.03)}
+    .line img{width:110px;height:80px;object-fit:cover;border-radius:8px}
+    .muted{color:#6b7280}
+
+    /* -------- Auth card -------- */
+    .auth-card{width:100%;max-width:420px;background:#fff;padding:18px;border-radius:12px;box-shadow:0 12px 30px rgba(12,20,40,0.05)}
+    .auth-card input{width:100%;padding:10px;border-radius:8px;border:1px solid #e8eefb;margin-top:10px}
+
+    /* -------- Footer -------- */
+    .site-footer{padding:18px 0;text-align:center;color:#6b7280;margin-top:28px}
+
+    /* -------- Responsive -------- */
+    @media (max-width:820px){
+      .hero{flex-direction:column;text-align:center}
+      .hero-right{text-align:center}
+      .nav{gap:6px}
+      .card img{height:150px}
+      .line img{width:90px;height:70px}
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <div style="display:flex;align-items:center;gap:14px">
+        <a class="brand" href="#/">Shoply</a>
+        <div class="muted" style="font-size:0.95rem">Fashion • Home • Accessories</div>
+      </div>
+      <nav class="nav" id="main-nav">
+        <a href="#/">Home</a>
+        <a href="#/cart">Cart (<span id="cart-count">0</span>)</a>
+        <a href="#/wishlist">Wishlist (<span id="wish-count">0</span>)</a>
+        <button id="auth-btn">Login</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- App container -->
+  <main class="container" id="app">
+
+    <!-- Home section -->
+    <section id="home-view">
+      <section class="hero" aria-hidden>
+        <div class="hero-left">
+          <h1>Trendy fashion, everyday prices</h1>
+          <p>Curated collections inspired by Flipkart & Meesho — clothes, accessories & home picks. Add to cart, wishlist, and checkout (simulation).</p>
+          <div style="margin-top:12px">
+            <a href="#/products" class="btn btn-primary">Browse Products</a>
+          </div>
+        </div>
+        <div class="hero-right">
+          <img src="https://source.unsplash.com/collection/190727/640x480?fashion" alt="hero" width="340" height="220">
+        </div>
+      </section>
+
+      <h2 style="margin-top:6px">Popular picks</h2>
+      <div id="home-products" class="products-grid" aria-live="polite"></div>
+    </section>
+
+    <!-- Products (grid) -->
+    <section id="products-view" style="display:none">
+      <h2>All Products</h2>
+      <div id="products-grid" class="products-grid"></div>
+    </section>
+
+    <!-- Product detail -->
+    <section id="product-view" style="display:none">
+      <div id="product-detail" class="product-page"></div>
+    </section>
+
+    <!-- Cart -->
+    <section id="cart-view" style="display:none">
+      <h2>Your Cart</h2>
+      <div id="cart-list" style="display:grid;gap:12px;margin-top:12px"></div>
+      <div id="cart-summary" style="margin-top:14px"></div>
+    </section>
+
+    <!-- Wishlist -->
+    <section id="wish-view" style="display:none">
+      <h2>Your Wishlist</h2>
+      <div id="wish-list" style="display:grid;gap:12px;margin-top:12px"></div>
+    </section>
+
+    <!-- Login / Register -->
+    <section id="auth-view" style="display:none">
+      <div style="display:flex;gap:20px;flex-wrap:wrap">
+        <div class="auth-card" id="login-card">
+          <h3>Login</h3>
+          <input type="email" id="login-email" placeholder="Email" />
+          <input type="password" id="login-password" placeholder="Password" />
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button class="btn btn-primary" id="btn-login">Login</button>
+            <button class="btn btn-ghost" id="btn-demo">Demo user</button>
+          </div>
+          <p id="login-msg" class="muted" style="margin-top:10px"></p>
+        </div>
+
+        <div class="auth-card" id="reg-card">
+          <h3>Create account</h3>
+          <input id="reg-name" placeholder="Full name" />
+          <input id="reg-email" placeholder="Email" />
+          <input id="reg-password" placeholder="Password" />
+          <div style="margin-top:10px">
+            <button class="btn btn-primary" id="btn-register">Register</button>
+          </div>
+          <p id="reg-msg" class="muted" style="margin-top:10px"></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <small>&copy; 2025 Shoply • Single-file portal for submission</small>
+    </div>
+  </footer>
+
+  <script>
+    /***********************
+     * Single-file Shoply  *
+     ***********************/
+
+    /* ------------------ Sample products ------------------ */
+    const PRODUCTS = [
+      {id:1, category:'Women Dresses', title:'Floral A-line Dress', price:899, mrp:1299, img:'https://source.unsplash.com/featured/?women,dress,floral'},
+      {id:2, category:'Sarees', title:'Elegant Silk Saree', price:1499, mrp:2199, img:'https://source.unsplash.com/featured/?saree,indian'},
+      {id:3, category:'Men Shirts', title:'Casual Cotton Shirt', price:699, mrp:999, img:'https://source.unsplash.com/featured/?men,shirt'},
+      {id:4, category:'Kurtas', title:'Embroidered Kurta', price:799, mrp:1199, img:'https://source.unsplash.com/featured/?kurta,ethnic'},
+      {id:5, category:'Kids', title:'Cute Kids T-shirt', price:399, mrp:599, img:'https://source.unsplash.com/featured/?kids,tshirt'},
+      {id:6, category:'Home', title:'Decorative Cushion', price:299, mrp:499, img:'https://source.unsplash.com/featured/?home,decor,cushion'},
+      {id:7, category:'Handbags', title:'Trendy Tote Bag', price:999, mrp:1499, img:'https://source.unsplash.com/featured/?handbag,tote'},
+      {id:8, category:'Accessories', title:'Stylish Earrings', price:349, mrp:599, img:'https://source.unsplash.com/featured/?earrings,jewelry'},
+      {id:9, category:'Footwear', title:'Casual Sneakers', price:1299, mrp:1999, img:'https://source.unsplash.com/featured/?sneakers,shoes'},
+      {id:10, category:'Home', title:'Ceramic Mug Set', price:499, mrp:799, img:'https://source.unsplash.com/featured/?mug,ceramic'},
+    ];
+
+    /* ------------------ localStorage keys ------------------ */
+    const LS_CART = 'shoply_cart_v1';
+    const LS_WISH = 'shoply_wish_v1';
+    const LS_USERS = 'shoply_users_v1';
+    const LS_AUTH = 'shoply_auth_v1';
+
+    /* ------------------ Helpers ------------------ */
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => document.querySelectorAll(sel);
+
+    function getCart(){ return JSON.parse(localStorage.getItem(LS_CART) || '[]'); }
+    function setCart(c){ localStorage.setItem(LS_CART, JSON.stringify(c)); updateCounts(); }
+    function getWish(){ return JSON.parse(localStorage.getItem(LS_WISH) || '[]'); }
+    function setWish(w){ localStorage.setItem(LS_WISH, JSON.stringify(w)); updateCounts(); }
+    function getUsers(){ return JSON.parse(localStorage.getItem(LS_USERS) || '[]'); }
+    function setUsers(u){ localStorage.setItem(LS_USERS, JSON.stringify(u)); }
+    function setAuth(email){ localStorage.setItem(LS_AUTH, email); updateCounts(); }
+    function getAuth(){ return localStorage.getItem(LS_AUTH); }
+    function logout(){ localStorage.removeItem(LS_AUTH); updateCounts(); navigate('/'); }
+
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    /* ------------------ Header counts & auth button ------------------ */
+    function updateCounts(){
+      const cart = getCart(); const wish = getWish();
+      const cartCount = cart.reduce((s,i)=>s+i.qty,0);
+      $('#cart-count').textContent = cartCount;
+      $('#wish-count').textContent = wish.length;
+      const auth = getAuth();
+      const authBtn = document.getElementById('auth-btn');
+      if(auth){
+        authBtn.textContent = 'Logout';
+        authBtn.onclick = ()=>{ if(confirm('Logout?')) logout(); };
+      } else {
+        authBtn.textContent = 'Login';
+        authBtn.onclick = ()=>navigate('/auth');
+      }
+    }
+
+    /* ------------------ Rendering: home & products ------------------ */
+    function renderProductCard(p){
+      return `
+      <article class="card" aria-labelledby="p${p.id}-t">
+        <img src="${p.img}" alt="${escapeHtml(p.title)}">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3 id="p${p.id}-t">${escapeHtml(p.title)}</h3>
+            <span class="badge">${escapeHtml(p.category)}</span>
+          </div>
+          <div class="price-row" style="margin-top:6px">
+            <div>
+              <div class="price">₹${p.price}</div>
+              <div class="mrp">₹${p.mrp}</div>
+            </div>
+            <div style="text-align:right">
+              <button class="btn" onclick="navigate('/product/${p.id}')">View</button>
+              <button class="btn btn-primary" onclick="addToCart(${p.id})">Add</button>
+            </div>
+          </div>
+        </div>
+      </article>`;
+    }
+
+    function showHome(){
+      hideAllViews();
+      $('#home-view').style.display = '';
+      const el = $('#home-products');
+      el.innerHTML = '';
+      PRODUCTS.slice(0,6).forEach(p=> el.insertAdjacentHTML('beforeend', renderProductCard(p)));
+    }
+
+    function showProducts(){
+      hideAllViews();
+      $('#products-view').style.display = '';
+      const grid = $('#products-grid');
+      grid.innerHTML = '';
+      PRODUCTS.forEach(p=> grid.insertAdjacentHTML('beforeend', renderProductCard(p)));
+    }
+
+    /* ------------------ Product detail ------------------ */
+    function showProduct(id){
+      hideAllViews();
+      $('#product-view').style.display = '';
+      const p = PRODUCTS.find(x=>x.id===id);
+      if(!p){ $('#product-detail').innerHTML = '<p class="muted">Product not found.</p>'; return; }
+      const wish = getWish();
+      const inWish = wish.includes(p.id);
+      $('#product-detail').innerHTML = `
+        <div class="product-detail" style="gap:18px">
+          <div style="flex:1;min-width:260px"><img src="${p.img}" alt="${escapeHtml(p.title)}"></div>
+          <div style="flex:1;min-width:260px">
+            <h2 style="margin:0">${escapeHtml(p.title)}</h2>
+            <div class="muted" style="margin-top:6px">${escapeHtml(p.category)}</div>
+            <div style="margin:14px 0"><span class="price">₹${p.price}</span> <span class="mrp">₹${p.mrp}</span></div>
+            <p class="muted">Free delivery • 7-day returns • Curated image</p>
+            <div style="margin-top:16px;display:flex;gap:10px">
+              <button class="btn btn-primary" onclick="addToCart(${p.id})">Add to cart</button>
+              <button class="btn" id="wish-action">${inWish ? 'Remove from Wishlist' : 'Add to Wishlist'}</button>
+            </div>
+            <hr style="margin:18px 0">
+            <h3>Description</h3>
+            <p class="muted">High-quality ${escapeHtml(p.category)} piece. Image from Unsplash matches the product theme.</p>
+          </div>
+        </div>
+      `;
+      document.getElementById('wish-action').onclick = ()=>{ toggleWish(p.id); showProduct(p.id); };
+    }
+
+    /* ------------------ Cart functions ------------------ */
+    function addToCart(id){
+      const auth = getAuth();
+      if(!auth){ alert('Please login/register to add items.'); navigate('/auth'); return; }
+      const cart = getCart();
+      const item = cart.find(i=>i.id===id);
+      if(item) item.qty++;
+      else cart.push({id, qty:1});
+      setCart(cart);
+      alert('Added to cart');
+      updateCounts();
+    }
+
+    function removeFromCart(id){
+      let cart = getCart();
+      cart = cart.filter(i=>i.id!==id);
+      setCart(cart); renderCart();
+    }
+
+    function changeQty(id, delta){
+      const cart = getCart();
+      const item = cart.find(i=>i.id===id);
+      if(!item) return;
+      item.qty = Math.max(1, item.qty + delta);
+      setCart(cart); renderCart();
+    }
+
+    function renderCart(){
+      hideAllViews();
+      $('#cart-view').style.display = '';
+      const container = $('#cart-list');
+      const summary = $('#cart-summary');
+      const cart = getCart();
+      container.innerHTML = '';
+      if(cart.length === 0){
+        container.innerHTML = '<p class="muted">Your cart is empty. Add items to proceed.</p>';
+        summary.innerHTML = '';
+        return;
+      }
+      let total = 0;
+      cart.forEach(ci=>{
+        const p = PRODUCTS.find(x=>x.id===ci.id);
+        if(!p) return;
+        const subtotal = p.price * ci.qty;
+        total += subtotal;
+        const div = document.createElement('div');
+        div.className = 'line';
+        div.innerHTML = `
+          <img src="${p.img}" alt="${escapeHtml(p.title)}">
+          <div style="flex:1">
+            <h4 style="margin:0">${escapeHtml(p.title)}</h4>
+            <div class="muted">₹${p.price} • ${escapeHtml(p.category)}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="margin-bottom:8px">Qty:
+              <button class="btn" onclick="changeQty(${p.id}, -1)">-</button>
+              <strong style="margin:0 8px">${ci.qty}</strong>
+              <button class="btn" onclick="changeQty(${p.id}, 1)">+</button>
+            </div>
+            <div style="margin:8px 0">Subtotal: ₹${subtotal}</div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn" onclick="removeFromCart(${p.id})">Remove</button>
+              <button class="btn btn-primary" onclick="addWishFromCart(${p.id}); removeFromCart(${p.id});">Move to Wishlist</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+      summary.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#fff;border-radius:10px;box-shadow:0 8px 22px rgba(12,20,40,0.03)">
+          <div><strong>Total:</strong> ₹${total}</div>
+          <div><button class="btn btn-primary" onclick="checkout()">Checkout</button></div>
+        </div>
+      `;
+    }
+
+    function checkout(){
+      const auth = getAuth();
+      if(!auth){ alert('Login to checkout'); navigate('/auth'); return; }
+      const cart = getCart();
+      if(cart.length === 0){ alert('Cart empty'); return; }
+      localStorage.removeItem(LS_CART);
+      updateCounts();
+      alert('Order placed! (simulation)');
+      navigate('/');
+    }
+
+    /* ------------------ Wishlist ------------------ */
+    function toggleWish(id){
+      const auth = getAuth();
+      if(!auth){ alert('Login to manage wishlist'); navigate('/auth'); return; }
+      const w = getWish();
+      const idx = w.indexOf(id);
+      if(idx === -1){ w.push(id); setWish(w); alert('Added to wishlist'); }
+      else { w.splice(idx,1); setWish(w); alert('Removed from wishlist'); }
+      updateCounts();
+    }
+
+    function addWishFromCart(id){
+      const w = getWish(); if(!w.includes(id)){ w.push(id); setWish(w); updateCounts(); }
+    }
+
+    function renderWishlist(){
+      hideAllViews();
+      $('#wish-view').style.display = '';
+      const container = $('#wish-list');
+      const w = getWish();
+      container.innerHTML = '';
+      if(w.length === 0){ container.innerHTML = '<p class="muted">Your wishlist is empty.</p>'; return; }
+      w.forEach(id=>{
+        const p = PRODUCTS.find(x=>x.id===id);
+        if(!p) return;
+        const div = document.createElement('div');
+        div.className = 'line';
+        div.innerHTML = `
+          <img src="${p.img}" alt="${escapeHtml(p.title)}">
+          <div style="flex:1">
+            <h4 style="margin:0">${escapeHtml(p.title)}</h4>
+            <div class="muted">₹${p.price}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="display:flex;gap:8px;flex-direction:column;align-items:flex-end">
+              <button class="btn btn-primary" onclick="addToCartFromWish(${p.id})">Add to Cart</button>
+              <button class="btn" onclick="removeFromWish(${p.id})">Remove</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function removeFromWish(id){
+      let w = getWish(); w = w.filter(x=>x!==id); setWish(w); renderWishlist();
+    }
+
+    function addToCartFromWish(id){
+      addToCart(id);
+      removeFromWish(id);
+      navigate('/cart');
+    }
+
+    /* ------------------ Auth: register & login ------------------ */
+    function attachAuthHandlers(){
+      $('#btn-register').onclick = ()=>{
+        const name = $('#reg-name').value.trim();
+        const email = $('#reg-email').value.trim();
+        const pw = $('#reg-password').value;
+        if(!name || !email || !pw){ $('#reg-msg').textContent = 'Fill all fields'; return; }
+        const users = getUsers();
+        if(users.find(u=>u.email===email)){ $('#reg-msg').textContent = 'Email already registered'; return; }
+        users.push({name,email,pw});
+        setUsers(users);
+        setAuth(email);
+        $('#reg-msg').textContent = 'Registered & logged in!';
+        setTimeout(()=>navigate('/'),700);
+      };
+
+      $('#btn-login').onclick = ()=>{
+        const email = $('#login-email').value.trim();
+        const pw = $('#login-password').value;
+        const users = getUsers();
+        const user = users.find(u=>u.email===email && u.pw===pw);
+        if(!user){ $('#login-msg').textContent = 'Invalid credentials'; return; }
+        setAuth(email);
+        $('#login-msg').textContent = 'Logged in!';
+        setTimeout(()=>navigate('/'),600);
+      };
+
+      $('#btn-demo').onclick = ()=>{ // quick demo user
+        const demo = {name:'Demo User', email:'demo@shoply.local', pw:'demo123'};
+        const users = getUsers();
+        if(!users.find(u=>u.email===demo.email)) { users.push(demo); setUsers(users); }
+        setAuth(demo.email);
+        $('#login-msg').textContent = 'Demo logged in!';
+        setTimeout(()=>navigate('/'),500);
+      };
+    }
+
+    /* ------------------ Routing (hash based) ------------------ */
+    function hideAllViews(){
+      ['#home-view','#products-view','#product-view','#cart-view','#wish-view','#auth-view'].forEach(s=>{ const el=$(s); if(el) el.style.display='none'; })
+    }
+
+    function navigate(path){
+      // path examples: '/', '/products', '/product/3', '/cart', '/wishlist', '/auth'
+      location.hash = '#!' + path;
+    }
+
+    function handleRoute(){
+      const hash = location.hash || '#!/';
+      const route = hash.replace(/^#!/,'') || '/';
+      updateCounts();
+      if(route === '/' ){ showHome(); return; }
+      if(route === '/products'){ showProducts(); return; }
+      if(route.startsWith('/product/')){
+        const id = Number(route.split('/')[2]);
+        showProduct(id); return;
+      }
+      if(route === '/cart'){ renderCart(); return; }
+      if(route === '/wishlist'){ renderWishlist(); return; }
+      if(route === '/auth'){ hideAllViews(); $('#auth-view').style.display = ''; return; }
+      // fallback
+      showHome();
+    }
+
+    /* ------------------ Init ------------------ */
+    function init(){
+      // initial data (if none)
+      if(!localStorage.getItem(LS_USERS)){
+        setUsers([]);
+      }
+      // wire nav links to hash router
+      document.querySelectorAll('a[href^="#/"]').forEach(a=>{
+        a.addEventListener('click', (e)=>{
+          e.preventDefault();
+          const href = a.getAttribute('href').slice(1); // "#/cart"
+          navigate(href);
+        });
+      });
+
+      // handle auth button
+      attachAuthHandlers();
+
+      // initial render
+      if(!location.hash) navigate('/');
+      handleRoute();
+      updateCounts();
+
+      // listen to hash changes
+      window.addEventListener('hashchange', handleRoute);
+      // also simple delegate for elements created later
+      window.addEventListener('click', (e)=>{
+        // navigation from buttons with navigate(...)
+      });
+    }
+
+    // expose a few functions to global for buttons inline
+    window.navigate = navigate;
+    window.addToCart = addToCart;
+    window.removeFromCart = removeFromCart;
+    window.changeQty = changeQty;
+    window.addWishFromCart = addWishFromCart;
+    window.toggleWish = toggleWish;
+    window.addToCartFromWish = addToCartFromWish;
+    window.removeFromWish = removeFromWish;
+    window.renderCart = renderCart;
+    window.renderWishlist = renderWishlist;
+    window.showProduct = showProduct;
+
+    // run
+    init();
+  </script>
+</body>
+</html>
